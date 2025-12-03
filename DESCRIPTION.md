@@ -9,6 +9,8 @@ Currently supported tools:
 
 More tools will be added in future versions.
 
+For details visit: https://github.com/Milan-Adhikari/opticlient 
+
 ---
 
 ## Installation
@@ -17,8 +19,8 @@ More tools will be added in future versions.
 pip install opticlient
 ```
 
-## Installation
-The Opti API requires an **API key**, which you obtain from the website https://cad-eta.vercel.app
+## Quick Usage Guide
+opticlient requires an **API key**, which you obtain from the website https://cad-eta.vercel.app
 
 You can provide it in either of two ways:
 
@@ -54,16 +56,6 @@ for job in schedule:
     print(job)
 ```
 
-#### What ```sms.run()``` does
-
-```client.sms.run()``` is a high-level wrapper that:
-
-1. Validates your Excel file.
-2. Submits it to the API.
-3. Polls until the job completes.
-4. Downloads the result ZIP in memory.
-5. Parses output/jobs.txt and returns a simple Python list[str] representing the scheduled job order.
-
 ## Sample Excel File format
 | Job   | Job1 | Job2 | Job3 | Job4 |
 |-------|------|------|------|------|
@@ -72,30 +64,9 @@ for job in schedule:
 | Job3  |   5  |   4  |   1  |   2  |
 | Job4  |   2  |   2  |   1  |   0  |
 
-## Base URL Configuration
-By default, the client uses the production API URL baked into the library.
-
-To target a different server (e.g., local development)
-
-#### Option 1 - Environment variable
-```bash
-export OPTICLIENT_BASE_URL="http://localhost:8000"
-```
-
-#### Option 2 - Pass directly in code
-```bash
-client = OptiClient(
-    api_token="YOUR_API_KEY",
-    base_url="http://localhost:8000",
-)
-```
 
 ## Versioning
 This package follows semantic versioning:
 
 * 0.x — early releases, API may change
 * 1.0+ — stable API
-
-## License
-MIT License
-See ```LICENSE``` for details
