@@ -10,9 +10,6 @@ from .tools import SingleMachineSchedulingClient
 class OptiClient:
     """
     Main entry point for interacting with the Opti API.
-
-    For now, this just manages configuration and an HTTP client.
-    Tool-specific clients (e.g. sms) will be attached later.
     """
 
     def __init__(
@@ -40,8 +37,6 @@ class OptiClient:
             timeout=timeout,
         )
 
-        # Placeholder for later:
-        # self.sms = SingleMachineSchedulingClient(self._http)
         self.sms: SingleMachineSchedulingClient = SingleMachineSchedulingClient(self._http)
 
     def close(self) -> None:

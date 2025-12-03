@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 from typing import Optional
 
-# Change this to your real backend base URL later.
 DEFAULT_BASE_URL = "https://cad.milan-adhikari.com"
 
 TOKEN_ENV_VAR = "OPTICLIENT_API_TOKEN"

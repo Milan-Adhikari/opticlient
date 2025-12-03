@@ -17,7 +17,6 @@ class SingleMachineSchedulingClient(BaseJobClient):
     _SUBMIT_PATH = '/jobs/tsp'
     
     def __init__(self, http: HttpClient) -> None:
-        # Backend endpoint: POST /jobs/sms
         super().__init__(http=http)
 
     def submit(
@@ -50,7 +49,6 @@ class SingleMachineSchedulingClient(BaseJobClient):
             fields["description"] = description
 
         # Placeholder for future content validation of the Excel file
-        # (we'll add real checks later).
 
         with path.open("rb") as f:
             files = {

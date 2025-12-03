@@ -21,7 +21,6 @@ class BaseJobClient:
     """
 
     def __init__(self, http: HttpClient) -> None:
-        # submit_path: e.g. "/jobs/sms"
         self._http = http
 
     def get_job(self, job_id: str) -> JobDetails:
