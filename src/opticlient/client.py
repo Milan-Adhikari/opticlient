@@ -5,6 +5,7 @@ from typing import Optional
 from .config import get_default_api_token, get_default_base_url
 from .http import HttpClient
 from .tools import SingleMachineSchedulingClient
+from .tools import MaxSATSolver
 
 
 class OptiClient:
@@ -38,6 +39,7 @@ class OptiClient:
         )
 
         self.sms: SingleMachineSchedulingClient = SingleMachineSchedulingClient(self._http)
+        self.maxsatSolver: MaxSATSolver = MaxSATSolver(self._http)
 
     def close(self) -> None:
         self._http.close()

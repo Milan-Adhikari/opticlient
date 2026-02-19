@@ -4,7 +4,7 @@ A lightweight Python client for interacting with the SaaS optimization API.
 This package provides a clean interface for submitting optimization jobs, polling their status, and retrieving results.
 
 Currently supported tools:
-
+- **MAXSAT** - solves a .wcnf instance in the format of "maxsat evaluation" - post 2022
 - **Single Machine Scheduling (sms)** — submit an Excel instance and obtain an ordered job schedule.
 
 More tools will be added in future versions.
@@ -42,6 +42,18 @@ The SMS tool takes an Excel file describing a scheduling instance and returns an
 
 #### Basic usage
 ```bash
+# use case for maxsat
+from opticlient import OptiClient
+
+client = OptiClient()  # reads token/base URL from environment if available
+# set the file path first (!!! necessary)
+client.maxsatSolver.set_file("test.wcnf")
+solution = client.maxsatSolver.optimize()
+
+print("Solution:", solution)
+```
+```bash
+# use case for single machine scheduling problem
 from opticlient import OptiClient
 
 client = OptiClient()  # reads token/base URL from environment if available
@@ -56,6 +68,17 @@ for job in schedule:
     print(job)
 ```
 
+## Sample .wcnf File format
+c Example WCNF file (post-2023 MaxSAT Evaluation format)
+c Offset: 0
+
+h 1 -2 3 0
+h -1 4 0
+
+5 2 -3 0
+3 -4 0
+1 5 0
+
 ## Sample Excel File format
 | Job   | Job1 | Job2 | Job3 | Job4 |
 |-------|------|------|------|------|
@@ -63,7 +86,6 @@ for job in schedule:
 | Job2  |   3  |   0  |   1  |   1  |
 | Job3  |   5  |   4  |   1  |   2  |
 | Job4  |   2  |   2  |   1  |   0  |
-
 
 ## Versioning
 This package follows semantic versioning:
