@@ -4,10 +4,12 @@ A lightweight Python client for interacting with the SaaS optimization API.
 This package provides a clean interface for submitting optimization jobs, polling their status, and retrieving results.
 
 Currently supported tools:
-
+- **MAXSAT** - solves a .wcnf instance in the format of "maxsat evaluation" - post 2022
 - **Single Machine Scheduling (sms)** — submit an Excel instance and obtain an ordered job schedule.
 
 More tools will be added in future versions.
+
+For details visit: https://github.com/Milan-Adhikari/opticlient 
 
 ---
 
@@ -17,8 +19,8 @@ More tools will be added in future versions.
 pip install opticlient
 ```
 
-## Installation
-The Opti API requires an **API key**, which you obtain from the website https://cad-eta.vercel.app
+## Quick Usage Guide
+opticlient requires an **API key**, which you obtain from the website https://cad-eta.vercel.app
 
 You can provide it in either of two ways:
 
@@ -40,6 +42,18 @@ The SMS tool takes an Excel file describing a scheduling instance and returns an
 
 #### Basic usage
 ```bash
+# use case for maxsat
+from opticlient import OptiClient
+
+client = OptiClient()  # reads token/base URL from environment if available
+# set the file path first (!!! necessary)
+client.maxsatSolver.set_file("test.wcnf")
+solution = client.maxsatSolver.optimize()
+
+print("Solution:", solution)
+```
+```bash
+# use case for single machine scheduling problem
 from opticlient import OptiClient
 
 client = OptiClient()  # reads token/base URL from environment if available
@@ -54,15 +68,16 @@ for job in schedule:
     print(job)
 ```
 
-#### What ```sms.run()``` does
+## Sample .wcnf File format
+c Example WCNF file (post-2023 MaxSAT Evaluation format)
+c Offset: 0
 
-```client.sms.run()``` is a high-level wrapper that:
+h 1 -2 3 0
+h -1 4 0
 
-1. Validates your Excel file.
-2. Submits it to the API.
-3. Polls until the job completes.
-4. Downloads the result ZIP in memory.
-5. Parses output/jobs.txt and returns a simple Python list[str] representing the scheduled job order.
+5 2 -3 0
+3 -4 0
+1 5 0
 
 ## Sample Excel File format
 | Job   | Job1 | Job2 | Job3 | Job4 |
@@ -72,30 +87,8 @@ for job in schedule:
 | Job3  |   5  |   4  |   1  |   2  |
 | Job4  |   2  |   2  |   1  |   0  |
 
-## Base URL Configuration
-By default, the client uses the production API URL baked into the library.
-
-To target a different server (e.g., local development)
-
-#### Option 1 - Environment variable
-```bash
-export OPTICLIENT_BASE_URL="http://localhost:8000"
-```
-
-#### Option 2 - Pass directly in code
-```bash
-client = OptiClient(
-    api_token="YOUR_API_KEY",
-    base_url="http://localhost:8000",
-)
-```
-
 ## Versioning
 This package follows semantic versioning:
 
 * 0.x — early releases, API may change
 * 1.0+ — stable API
-
-## License
-MIT License
-See ```LICENSE``` for details
