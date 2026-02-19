@@ -69,6 +69,7 @@ for job in schedule:
 ```
 
 ## Sample .wcnf File format
+```
 c Example WCNF file (post-2023 MaxSAT Evaluation format)
 c Offset: 0
 
@@ -78,6 +79,7 @@ h -1 4 0
 5 2 -3 0
 3 -4 0
 1 5 0
+```
 
 ## Sample Excel File format
 | Job   | Job1 | Job2 | Job3 | Job4 |
