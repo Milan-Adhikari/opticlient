@@ -20,10 +20,10 @@ class MaxSAT(BaseJobClient):
     
     def __init__(
         self,
+        from_filepath: str = None,
         api_token: Optional[str] = None,
         base_url: Optional[str] = None,
         timeout: float = 30.0,
-        from_filepath: str = None
     ):
         if api_token is None:
             api_token = _get_default_api_token()

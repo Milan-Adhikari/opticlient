@@ -55,8 +55,8 @@ print("solution:", x)
 
 # solving without a file
 solver = MaxSAT()  # reads token/base URL from environment if available
-solver.add_clause([1,2])
-solver.add_clause([-1,2])
+solver.addClause([1,2])
+solver.addClause([-1,2])
 solver.setObjective({2 : -1 })
 x = solver.optimize()
 print("solution:", x)
