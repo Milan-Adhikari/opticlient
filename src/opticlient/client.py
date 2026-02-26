@@ -2,11 +2,9 @@ from __future__ import annotations
 
 from typing import Optional
 
-from .config import get_default_api_token, get_default_base_url
+from .config import _get_default_api_token, _get_default_base_url
 from .http import HttpClient
 from .tools import SingleMachineSchedulingClient
-from .tools import MaxSATSolver
-
 
 class OptiClient:
     """
@@ -20,9 +18,9 @@ class OptiClient:
         timeout: float = 30.0,
     ) -> None:
         if api_token is None:
-            api_token = get_default_api_token()
+            api_token = _get_default_api_token()
         if base_url is None:
-            base_url = get_default_base_url()
+            base_url = _get_default_base_url()
         
         if api_token is None:
             raise ValueError(
@@ -39,13 +37,12 @@ class OptiClient:
         )
 
         self.sms: SingleMachineSchedulingClient = SingleMachineSchedulingClient(self._http)
-        self.maxsatSolver: MaxSATSolver = MaxSATSolver(self._http)
 
-    def close(self) -> None:
-        self._http.close()
+    def __close(self) -> None:
+        self._http._close()
 
     def __enter__(self) -> "OptiClient":
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
-        self.close()
+        self.__close()

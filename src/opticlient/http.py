@@ -36,7 +36,7 @@ class HttpClient:
             "Accept": "application/json",
         }
 
-    def request(self, method: str, path: str, **kwargs: Any) -> httpx.Response:
+    def _request(self, method: str, path: str, **kwargs: Any) -> httpx.Response:
         headers = kwargs.pop("headers", {})
         merged_headers = {**headers, **self._auth_headers()}
 
@@ -48,23 +48,23 @@ class HttpClient:
         )
         return response
 
-    def get(self, path: str, **kwargs: Any) -> httpx.Response:
-        return self.request("GET", path, **kwargs)
+    def _get(self, path: str, **kwargs: Any) -> httpx.Response:
+        return self._request("GET", path, **kwargs)
 
-    def post(self, path: str, **kwargs: Any) -> httpx.Response:
-        return self.request("POST", path, **kwargs)
+    def _post(self, path: str, **kwargs: Any) -> httpx.Response:
+        return self._request("POST", path, **kwargs)
 
-    def close(self) -> None:
-        self._client.close()
+    def _close(self) -> None:
+        self._client._close()
 
     def __enter__(self) -> "HttpClient":
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
-        self.close()
+        self._close()
 
 
-def parse_api_response_json(response: httpx.Response) -> Any:
+def _parse_api_response_json(response: httpx.Response) -> Any:
     """
     Parse the standard ApiResponse envelope used by the backend.
 

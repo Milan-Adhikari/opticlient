@@ -4,7 +4,7 @@ import time
 from pathlib import Path
 from typing import Optional
 
-from ..http import HttpClient, parse_api_response_json
+from ..http import HttpClient, _parse_api_response_json
 from ..models import (
     JobDetails,
     job_details_from_api,
@@ -23,15 +23,15 @@ class BaseJobClient:
     def __init__(self, http: HttpClient) -> None:
         self._http = http
 
-    def get_job(self, job_id: str) -> JobDetails:
+    def _get_job(self, job_id: str) -> JobDetails:
         """
         Fetch detailed information for a job.
         """
-        resp = self._http.get(f"/jobs/{job_id}")
-        data = parse_api_response_json(resp)
+        resp = self._http._get(f"/jobs/{job_id}")
+        data = _parse_api_response_json(resp)
         return job_details_from_api(data)
 
-    def wait_for_completion(
+    def _wait_for_completion(
         self,
         job_id: str,
         poll_interval: float = 2.0,
@@ -43,7 +43,7 @@ class BaseJobClient:
         start = time.time()
 
         while True:
-            details = self.get_job(job_id)
+            details = self._get_job(job_id)
 
             if details.status == "completed":
                 return details
@@ -59,7 +59,7 @@ class BaseJobClient:
 
             time.sleep(poll_interval)
 
-    def download_result_zip(
+    def _download_result_zip(
         self,
         job_id: str,
         output_dir: str | Path,
@@ -68,7 +68,7 @@ class BaseJobClient:
         Download the result ZIP for a completed job into output_dir.
         Returns the path to the saved ZIP file.
         """
-        resp = self._http.get(f"/jobs/{job_id}/result")
+        resp = self._http._get(f"/jobs/{job_id}/result")
 
         if resp.status_code != 200:
             snippet = resp.text[:200]
@@ -81,7 +81,7 @@ class BaseJobClient:
         output_dir_path.mkdir(parents=True, exist_ok=True)
 
         # Try to infer filename from Content-Disposition, otherwise default.
-        content_disp = resp.headers.get("Content-Disposition", "")
+        content_disp = resp.headers._get("Content-Disposition", "")
         filename = f"{job_id}.zip"
 
         if "filename=" in content_disp:

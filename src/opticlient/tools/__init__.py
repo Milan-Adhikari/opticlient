@@ -1,4 +1,4 @@
 from .sms import SingleMachineSchedulingClient
-from .maxsat import MaxSATSolver
+from .maxsat import MaxSAT
 
-__all__ = ["SingleMachineSchedulingClient", "MaxSATSolver"]
+__all__ = ["SingleMachineSchedulingClient", "MaxSAT"]

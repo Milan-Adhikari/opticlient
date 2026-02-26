@@ -3,10 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional, List
 
-from ..http import HttpClient, parse_api_response_json
+from ..http import HttpClient, _parse_api_response_json
 from ..models import JobSummary, JobDetails, job_summary_from_api
 from .base import BaseJobClient
-from .sms_parser import parse_sms_schedule_from_zip_bytes
+from .sms_parser import _parse_sms_schedule_from_zip_bytes
 
 
 class SingleMachineSchedulingClient(BaseJobClient):
@@ -54,20 +54,20 @@ class SingleMachineSchedulingClient(BaseJobClient):
             files = {
                 "file": (path.name, f, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
             }
-            resp = self._http.post(
+            resp = self._http._post(
                 self._SUBMIT_PATH,
                 files=files,
                 data=fields,
             )
 
-        data = parse_api_response_json(resp)
+        data = _parse_api_response_json(resp)
         return job_summary_from_api(data)
 
-    def get(self, job_id: str) -> JobDetails:
+    def _get(self, job_id: str) -> JobDetails:
         """
         Get sms job details.
         """
-        return self.get_job(job_id)
+        return self._get_job(job_id)
 
     def wait(
         self,
@@ -78,7 +78,7 @@ class SingleMachineSchedulingClient(BaseJobClient):
         """
         Wait for an sms job to complete.
         """
-        return self.wait_for_completion(
+        return self._wait_for_completion(
             job_id=job_id,
             poll_interval=poll_interval,
             timeout=timeout,
@@ -113,7 +113,7 @@ class SingleMachineSchedulingClient(BaseJobClient):
         )
 
         # Download ZIP into memory only.
-        resp = self._http.get(f"/jobs/{job_id}/result")
+        resp = self._http._get(f"/jobs/{job_id}/result")
         if resp.status_code != 200:
             snippet = resp.text[:200]
             raise RuntimeError(
@@ -124,6 +124,6 @@ class SingleMachineSchedulingClient(BaseJobClient):
         zip_bytes = resp.content
 
         # Parse schedule from ZIP bytes.
-        schedule = parse_sms_schedule_from_zip_bytes(zip_bytes)
+        schedule = _parse_sms_schedule_from_zip_bytes(zip_bytes)
         return schedule
 

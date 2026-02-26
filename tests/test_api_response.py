@@ -1,6 +1,6 @@
 import httpx
 
-from opticlient.http import parse_api_response_json
+from opticlient.http import _parse_api_response_json
 from opticlient.models import job_summary_from_api, job_details_from_api
 
 
@@ -21,7 +21,7 @@ def test_parse_api_response_ok_and_job_summary():
         },
     )
 
-    data = parse_api_response_json(resp)
+    data = _parse_api_response_json(resp)
     summary = job_summary_from_api(data)
 
     assert summary.id == "123"
@@ -57,7 +57,7 @@ def test_parse_api_response_ok_and_job_details():
         },
     )
 
-    data = parse_api_response_json(resp)
+    data = _parse_api_response_json(resp)
     details = job_details_from_api(data)
 
     assert details.id == "123"
@@ -82,7 +82,7 @@ def test_parse_api_response_error():
     )
 
     try:
-        parse_api_response_json(resp)
+        _parse_api_response_json(resp)
     except RuntimeError as exc:
         msg = str(exc)
         assert "status=400" in msg

@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import List
 
 
-def extract_zip(zip_path: str | Path, dest_dir: str | Path) -> List[Path]:
+def _extract_zip(zip_path: str | Path, dest_dir: str | Path) -> List[Path]:
     """
     Extract a ZIP file into dest_dir.
     Returns a list of extracted file paths.

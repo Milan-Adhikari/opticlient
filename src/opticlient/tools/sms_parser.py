@@ -5,7 +5,7 @@ from typing import List
 import zipfile
 
 
-def parse_sms_schedule_from_zip_bytes(zip_bytes: bytes) -> List[str]:
+def _parse_sms_schedule_from_zip_bytes(zip_bytes: bytes) -> List[str]:
     """
     Read output/jobs.txt from the given ZIP bytes and interpret each
     non-empty, non-comment line as one job in the schedule, in order.

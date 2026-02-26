@@ -14,11 +14,11 @@ class FakeHttp:
         self._responses = list(responses)
         self.calls = []
 
-    def post(self, path, **kwargs):
+    def _post(self, path, **kwargs):
         self.calls.append(("POST", path))
         return self._responses.pop(0)
 
-    def get(self, path, **kwargs):
+    def _get(self, path, **kwargs):
         self.calls.append(("GET", path))
         return self._responses.pop(0)
 

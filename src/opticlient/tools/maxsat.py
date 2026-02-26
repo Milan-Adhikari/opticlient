@@ -8,19 +8,40 @@ import zipfile
 import tempfile
 from collections.abc import Iterable
 
-from ..http import HttpClient, parse_api_response_json
+from ..config import _get_default_api_token, _get_default_base_url
+from ..http import HttpClient, _parse_api_response_json
 from ..models import JobSummary, JobDetails, job_summary_from_api
 from .base import BaseJobClient
 
 
-class MaxSATSolver(BaseJobClient):
+class MaxSAT(BaseJobClient):
 
     _SUBMIT_PATH = '/jobs/maxsat'
     
-    def __init__(self, http: HttpClient):
-        super().__init__(http=http)
+    def __init__(
+        self,
+        api_token: Optional[str] = None,
+        base_url: Optional[str] = None,
+        timeout: float = 30.0,
+        from_filepath: str = None
+    ):
+        if api_token is None:
+            api_token = _get_default_api_token()
+        if base_url is None:
+            base_url = _get_default_base_url()
         
-    def set_file(self, from_filepath: str=None):
+        if api_token is None:
+            raise ValueError(
+                "API token is required. Set OPTICLIENT_API_TOKEN env var "
+                "or pass api_token=..."
+            )
+        self._http = HttpClient(
+            base_url=base_url,
+            api_token=api_token,
+            timeout=timeout,
+        )
+        super().__init__(http=self._http)
+
         if from_filepath != None:
             if not isinstance(from_filepath, str):
                 raise TypeError("from_filepath must be a string to the .wcnf file to initialize the solver with")
@@ -29,11 +50,11 @@ class MaxSATSolver(BaseJobClient):
             self.filepath = from_filepath
         else:
             self.filepath = None
-            self.clauses=[]
-            self.objective={}
-            self.highestAtom=0
+            self.clauses = []
+            self.objective = {}
+            self.highestAtom = 0
 
-    def add_clause(self, clause: Iterable[int]):
+    def addClause(self, clause: Iterable[int]):
         if self.filepath != None:
             raise TypeError("method not callable after solver initialization from file")
         self.clauses.append([lit for lit in clause])
@@ -56,16 +77,17 @@ class MaxSATSolver(BaseJobClient):
     def optimize(self):
         if self.filepath != None:
             filepathToSolve=self.filepath
+            solution = self._solve_instance(filepathToSolve)
         else:
             with tempfile.NamedTemporaryFile(mode="w", delete=True) as f:
                 f.write("\n".join("h "+" ".join([str(lit) for lit in clause])+" 0" for clause in self.clauses))
                 for lit, coeff in self.objective.items():
                     f.write("\n"+str(coeff)+" "+str(lit)+"0")
                 filepathToSolve=f.name
-        solution = self.solveInstance(filepathToSolve)
+                solution = self._solve_instance(filepathToSolve)
         return solution
 
-    def wait(
+    def _wait(
         self,
         job_id: str,
         poll_interval: float = 2.0,
@@ -74,19 +96,19 @@ class MaxSATSolver(BaseJobClient):
         """
         Wait for job to complete.
         """
-        return self.wait_for_completion(
+        return self._wait_for_completion(
             job_id=job_id,
             poll_interval=poll_interval,
             timeout=timeout,
         )
     
-    def get(self, job_id: str) -> JobDetails:
+    def _get(self, job_id: str) -> JobDetails:
         """
         Get maxsat job details.
         """
-        return self.get_job(job_id)
+        return self._get_job(job_id)
     
-    def submit(
+    def _submit(
         self,
         file_path: str | Path,
         description: Optional[str] = None,
@@ -99,15 +121,15 @@ class MaxSATSolver(BaseJobClient):
         """
         path = Path(file_path)
 
-        if not path.is_file():
-            raise ValueError(f"Input file does not exist: {path}")
+        # if not path.is_file():
+        #     raise ValueError(f"Input file does not exist: {path}")
 
-        allowed_ext = {".wcnf"}
-        if path.suffix.lower() not in allowed_ext:
-            raise ValueError(
-                f"Expected a WCNF file with one of extensions {sorted(allowed_ext)}, "
-                f"got {path.suffix!r}"
-            )
+        # allowed_ext = {".wcnf"}
+        # if path.suffix.lower() not in allowed_ext:
+        #     raise ValueError(
+        #         f"Expected a WCNF file with one of extensions {sorted(allowed_ext)}, "
+        #         f"got {path.suffix!r}"
+        #     )
 
         fields = {}
         if description is not None:
@@ -117,16 +139,16 @@ class MaxSATSolver(BaseJobClient):
             files = {
                 "file": (path.name, f, "text/plain"),
             }
-            resp = self._http.post(
+            resp = self._http._post(
                 self._SUBMIT_PATH,
                 files=files,
                 data=fields,
             )
 
-        data = parse_api_response_json(resp)
+        data = _parse_api_response_json(resp)
         return job_summary_from_api(data)
     
-    def parse_solution_from_zip_bytes(self, zip_bytes: bytes) -> List[str]:
+    def _parse_solution_from_zip_bytes(self, zip_bytes: bytes) -> List[str]:
         """
         Read output/solution.txt from the given ZIP bytes
 
@@ -146,7 +168,7 @@ class MaxSATSolver(BaseJobClient):
 
         return result
     
-    def solveInstance(
+    def _solve_instance(
         self,
         filepathToSolve: str | Path,
         description: Optional[str] = None,
@@ -157,18 +179,18 @@ class MaxSATSolver(BaseJobClient):
         Returns:
             List[str]: schedule of jobs in execution order.
         """
-        summary = self.submit(file_path=filepathToSolve, description=description)
+        summary = self._submit(file_path=filepathToSolve, description=description)
         job_id = summary.id
 
         # Ensure the job is completed (or error) before fetching results.
-        self.wait(
+        self._wait(
             job_id=job_id,
             poll_interval=poll_interval,
             timeout=timeout,
         )
 
         # Download ZIP into memory only.
-        resp = self._http.get(f"/jobs/{job_id}/result")
+        resp = self._http._get(f"/jobs/{job_id}/result")
         if resp.status_code != 200:
             snippet = resp.text[:200]
             raise RuntimeError(
@@ -179,6 +201,6 @@ class MaxSATSolver(BaseJobClient):
         zip_bytes = resp.content
 
         # Parse schedule from ZIP bytes.
-        solution = self.parse_solution_from_zip_bytes(zip_bytes)
+        solution = self._parse_solution_from_zip_bytes(zip_bytes)
         return solution
 

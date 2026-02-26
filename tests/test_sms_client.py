@@ -18,11 +18,11 @@ class FakeHttp:
         self._responses = responses
         self.calls: List[Dict[str, Any]] = []
 
-    def post(self, path: str, **kwargs: Any) -> httpx.Response:
+    def _post(self, path: str, **kwargs: Any) -> httpx.Response:
         self.calls.append({"method": "POST", "path": path, "kwargs": kwargs})
         return self._responses.pop(0)
 
-    def get(self, path: str, **kwargs: Any) -> httpx.Response:
+    def _get(self, path: str, **kwargs: Any) -> httpx.Response:
         self.calls.append({"method": "GET", "path": path, "kwargs": kwargs})
         return self._responses.pop(0)
 
@@ -60,7 +60,7 @@ def test_sms_submit_uses_correct_path_and_parses_job_summary(tmp_path):
     assert fake_http.calls[0]["path"] == "/jobs/tsp"
 
 
-def test_base_job_client_wait_for_completion(monkeypatch):
+def test_base_job_client__wait_for_completion(monkeypatch):
     # First GET: job is pending
     resp_pending = httpx.Response(
         status_code=200,
@@ -103,7 +103,7 @@ def test_base_job_client_wait_for_completion(monkeypatch):
     # Avoid real sleeping
     monkeypatch.setattr("opticlient.tools.base.time.sleep", lambda _: None)
 
-    details = base_client.wait_for_completion(
+    details = base_client._wait_for_completion(
         job_id="job-123",
         poll_interval=0.0,
         timeout=5.0,
