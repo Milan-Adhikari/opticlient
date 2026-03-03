@@ -6,6 +6,7 @@ from typing import Optional, List
 import zipfile
 
 import tempfile
+import os
 from collections.abc import Iterable
 
 from ..config import _get_default_api_token, _get_default_base_url
@@ -14,7 +15,7 @@ from ..models import JobSummary, JobDetails, job_summary_from_api
 from .base import BaseJobClient
 
 
-class MaxSAT(BaseJobClient):
+class MaxSATSolver(BaseJobClient):
 
     _SUBMIT_PATH = '/jobs/maxsat'
     
@@ -55,37 +56,64 @@ class MaxSAT(BaseJobClient):
             self.highestAtom = 0
 
     def addClause(self, clause: Iterable[int]):
+        '''
+        adds a clause to the solver. Clauses are iterables of non zero integers
+        '''
         if self.filepath != None:
             raise TypeError("method not callable after solver initialization from file")
-        self.clauses.append([lit for lit in clause])
+        clause=list(clause)
+        self.clauses.append(clause)
         for lit in clause:
+            if not isinstance(lit, int):
+                raise ValueError("Literals must be non zero integers. Problematic clause "+str(clause))
+            if lit==0:
+                raise ValueError("A literal cannot be zero. Problematic clause "+str(clause))
             if abs(lit)>self.highestAtom:
                 self.highestAtom=abs(lit)
 
-    def setObjective(self, objective: dict[int, int]):
+    def setObjective(self, objective: dict[int, int], sense: int = 1):
+        '''
+        sets the objective function.
+        :param objective: dictionary mapping literals to integral objective coefficients.
+        :param sense: if sense==1: maximization, if sense==-1: minimization
+        :return: None
+        '''
+        assert sense==1 or sense==-1, "sense must be either 1 or -1"
         if self.filepath != None:
             raise TypeError("method not callable after solver initialization from file")
-        self.objective={}
+        self.objective = {}
         for lit, coeff in objective.items():
-            if abs(lit)>self.highestAtom:
-                self.highestAtom=abs(lit)
-            if coeff >0:
-                self.objective[lit]=coeff
-            elif coeff <0:
-                self.objective[-lit]=-coeff
+            coeff *= sense
+            if abs(lit) > self.highestAtom:
+                self.highestAtom = abs(lit)
+            if coeff>0:
+                self.objective[lit] = coeff
+            elif coeff < 0:
+                self.objective[-lit] = -coeff
 
     def optimize(self):
+        '''
+        optimizes the model with the objective set by .setObjective().
+        Returns: some optimal solution to the problem.
+        '''
         if self.filepath != None:
-            filepathToSolve=self.filepath
-            solution = self._solve_instance(filepathToSolve)
+            return self._solve_instance(self.filepath)
         else:
-            with tempfile.NamedTemporaryFile(mode="w", delete=True) as f:
-                f.write("\n".join("h "+" ".join([str(lit) for lit in clause])+" 0" for clause in self.clauses))
-                for lit, coeff in self.objective.items():
-                    f.write("\n"+str(coeff)+" "+str(lit)+"0")
-                filepathToSolve=f.name
-                solution = self._solve_instance(filepathToSolve)
-        return solution
+            fd, path = tempfile.mkstemp(prefix="maxsat_", suffix=".wcnf", text=True)
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
+                    # write instance
+                    f.write("\n".join("h " + " ".join([str(lit) for lit in clause]) + " 0" for clause in self.clauses))
+                    for lit, coeff in self.objective.items():
+                        f.write("\n" + str(coeff) + " " + str(lit) + " 0")
+                    f.flush()
+                    os.fsync(f.fileno())
+                return self._solve_instance(path)
+            finally:
+                try:
+                    os.unlink(path)
+                except FileNotFoundError:
+                    pass
 
     def _wait(
         self,
